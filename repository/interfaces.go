@@ -7,5 +7,9 @@ package repository
 import "context"
 
 type RepositoryInterface interface {
-	GetTestById(ctx context.Context, input GetTestByIdInput) (output GetTestByIdOutput, err error)
+	InsertUser(ctx context.Context, input User) (output InsertUserOutput, err error)
+	GetUserByPhoneNumber(ctx context.Context, input GetUserByPhoneNumberInput) (output User, err error)
+	GetUserByID(ctx context.Context, input GetUserByIDInput) (output UserInfo, err error)
+	GetUserByFullName(ctx context.Context, input GetUserByFullNameInput) (output UserInfo, err error)
+	UpdateUserByID(ctx context.Context, input User) (err error)
 }
