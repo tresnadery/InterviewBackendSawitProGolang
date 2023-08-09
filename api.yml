@@ -15,27 +15,147 @@ info:
   license:
     name: MIT
 servers:
-  - url: http://localhost
+  - url: http://localhost:8080
 paths:
-  /hello:
+  /users/profile:
     get:
-      summary: This is just a test endpoint to get you started. Please delete this endpoint.
-      operationId: hello
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema:
-            type: integer
+      summary: This is an endpoint to get user profile.
+      operationId: getProfile
+      security:
+        - BearerAuth: []
       responses:
         '200':
-          description: Test return
+          description: Get profile successfully
           content:
-            application/json:    
+            application/json:
               schema:
-                $ref: "#/components/schemas/HelloResponse"
+                $ref: "#/components/schemas/GetProfileResponse"
+        '500':
+          description: Failed to get profile because error 500 occured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '404':
-          description: Not found
+          description: Failed to get profile becase profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Unahtorized token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users:
+    put:
+      summary: This is an endpoint to update profile
+      operationId: updateProfile
+      security:
+        - BearerAuth: []
+      consumes:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+             
+      responses:
+        '200':
+          description: Update profile successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateProfileResponse"
+        '500':
+          description: Failed to get profile because error 500 occured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequestResponse"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Unahtorized token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/register:
+    post:
+      summary: This is an endpoint to user registration.
+      operationId: register
+      consumes:
+        - application/json
+      requestBody:
+       required: true
+       content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        '201':
+          description: Register successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorBadRequestResponse"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Failed to register because error 500 occured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/login:
+    post:
+      summary: This is an endpoint to user login.
+      operationId: login
+      consumes:
+        - application/json
+      requestBody:
+       required: true
+       content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              phoneNumber:
+                type: string
+              password:
+                type: string
+      responses:
+        '200':
+          description: Login successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        '500':
+          description: Failed to register because error 500 occured
           content:
             application/json:
               schema:
@@ -56,3 +176,73 @@ components:
       properties:
         message:
           type: string
+    ErrorBadRequestResponse:
+      type: object
+      required:
+        - error
+      properties:
+        errors:
+          type: object
+      example:
+        errors: {"field":["string"]}
+    GetProfileResponse:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phoneNumber:
+          type: string
+    RegisterRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          min: 10
+          max: 13
+          prefix: +62
+        fullName:
+          type: string
+          min: 3
+          max: 60
+        password:
+          type: string
+          min: 6
+          max: 64
+          format: at least 1 number, 1 upper character, 1 special character
+    RegisterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+    LoginResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        token:
+          type: string
+    UpdateProfileRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          min: 10
+          max: 13
+          prefix: +62
+        fullName:
+          type: string
+          min: 3
+          max: 60
+    UpdateProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
