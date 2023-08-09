@@ -94,16 +94,30 @@ func (mr *MockRepositoryInterfaceMockRecorder) InsertUser(ctx, input interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUser", reflect.TypeOf((*MockRepositoryInterface)(nil).InsertUser), ctx, input)
 }
 
-// UpdateUserByID mocks base method.
-func (m *MockRepositoryInterface) UpdateUserByID(ctx context.Context, input User) error {
+// UpdateLastLoginAndSuccessfullyLogin mocks base method.
+func (m *MockRepositoryInterface) UpdateLastLoginAndSuccessfullyLogin(ctx context.Context, input UpdateLastLoginAndSuccessfullyLoginInput) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserByID", ctx, input)
+	ret := m.ctrl.Call(m, "UpdateLastLoginAndSuccessfullyLogin", ctx, input)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateUserByID indicates an expected call of UpdateUserByID.
-func (mr *MockRepositoryInterfaceMockRecorder) UpdateUserByID(ctx, input interface{}) *gomock.Call {
+// UpdateLastLoginAndSuccessfullyLogin indicates an expected call of UpdateLastLoginAndSuccessfullyLogin.
+func (mr *MockRepositoryInterfaceMockRecorder) UpdateLastLoginAndSuccessfullyLogin(ctx, input interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserByID", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateUserByID), ctx, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLastLoginAndSuccessfullyLogin", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateLastLoginAndSuccessfullyLogin), ctx, input)
+}
+
+// UpdateUser mocks base method.
+func (m *MockRepositoryInterface) UpdateUser(ctx context.Context, input UpdateUserInput) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUser", ctx, input)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockRepositoryInterfaceMockRecorder) UpdateUser(ctx, input interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockRepositoryInterface)(nil).UpdateUser), ctx, input)
 }

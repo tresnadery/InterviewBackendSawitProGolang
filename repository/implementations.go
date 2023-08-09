@@ -7,7 +7,7 @@ import (
 )
 
 func (r *Repository) InsertUser(ctx context.Context, input User) (output InsertUserOutput, err error) {
-	stmt, err := r.Db.PrepareContext(ctx, "INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$3) RETURNING id")
+	stmt, err := r.Db.PrepareContext(ctx, "INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$4) RETURNING id")
 	if err != nil {
 		return
 	}
@@ -81,13 +81,26 @@ func (r *Repository) GetUserByFullName(ctx context.Context, input GetUserByFullN
 	return
 }
 
-func (r *Repository) UpdateUserByID(ctx context.Context, input User) (err error) {
+func (r *Repository) UpdateUser(ctx context.Context, input UpdateUserInput) (err error) {
 	stmt, err := r.Db.PrepareContext(ctx, "UPDATE users SET phone_number = $1, full_name = $2 WHERE id = $3")
 	if err != nil {
 		return
 	}
 
 	_, err = stmt.ExecContext(ctx, input.PhoneNumber, input.FullName, input.ID)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (r *Repository) UpdateLastLoginAndSuccessfullyLogin(ctx context.Context, input UpdateLastLoginAndSuccessfullyLoginInput) (err error) {
+	stmt, err := r.Db.PrepareContext(ctx, "UPDATE users SET successfully_login = (successfully_login + 1), last_login = $1 WHERE id = $2")
+	if err != nil {
+		return
+	}
+
+	_, err = stmt.ExecContext(ctx, input.LastLogin, input.ID)
 	if err != nil {
 		return
 	}

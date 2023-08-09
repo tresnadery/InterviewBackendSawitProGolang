@@ -3,6 +3,7 @@ package repository
 
 import (
 	"github.com/google/uuid"
+	"time"
 )
 
 type GetTestByIdInput struct {
@@ -20,12 +21,14 @@ type User struct {
 }
 
 type UserInfo struct {
-	PhoneNumber string
-	FullName    string
+	PhoneNumber       string `validate:"required,min=10,max=13,indonesian_phone_number"`
+	FullName          string `validate:"required,min=3,max=60"`
+	LastLogin         *time.Time
+	SuccessfullyLogin int
 }
 
 type UserSecret struct {
-	Password     string
+	Password     string `validate:"required,min=6,max=64,valid_password"`
 	PasswordSalt string
 }
 
@@ -45,8 +48,13 @@ type GetUserByFullNameInput struct {
 	FullName string
 }
 
-type UpdateUserByID struct {
+type UpdateUserInput struct {
 	ID          uuid.UUID
-	PhoneNumber string
-	FullName    string
+	PhoneNumber string `validate:"required,min=10,max=13,indonesian_phone_number"`
+	FullName    string `validate:"required,min=3,max=60"`
+}
+
+type UpdateLastLoginAndSuccessfullyLoginInput struct {
+	ID        uuid.UUID
+	LastLogin *time.Time
 }

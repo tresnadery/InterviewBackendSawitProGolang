@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"regexp"
 	"testing"
+	"time"
 )
 
 var err error
@@ -22,6 +23,7 @@ type TestSuite struct {
 	db   *sql.DB
 	r    *Repository
 	ctx  context.Context
+	curr *time.Time
 
 	user                      User
 	userInfo                  UserInfo
@@ -30,9 +32,14 @@ type TestSuite struct {
 	getUserByIDInput          GetUserByIDInput
 	getUserByPhoneNumber      GetUserByPhoneNumberInput
 	getUserByFullName         GetUserByFullNameInput
+
+	updateUserInput                          UpdateUserInput
+	updateLastLoginAndSuccessfullyLoginInput UpdateLastLoginAndSuccessfullyLoginInput
 }
 
 func (s *TestSuite) SetupSuite() {
+	curr := time.Now()
+	s.curr = &curr
 	s.db, s.mock, err = sqlmock.New()
 	require.NoError(s.T(), err)
 	s.r = &Repository{
@@ -62,6 +69,16 @@ func (s *TestSuite) SetupSuite() {
 	s.getUserByFullName = GetUserByFullNameInput{
 		FullName: s.user.FullName,
 	}
+	s.updateLastLoginAndSuccessfullyLoginInput = UpdateLastLoginAndSuccessfullyLoginInput{
+		ID:        s.user.ID,
+		LastLogin: &curr,
+	}
+
+	s.updateUserInput = UpdateUserInput{
+		ID:          s.user.ID,
+		PhoneNumber: s.user.PhoneNumber,
+		FullName:    s.user.FullName,
+	}
 }
 
 func (s *TestSuite) AfterTest(_, _ string) {
@@ -73,7 +90,7 @@ func TestSuiteInit(t *testing.T) {
 }
 
 func (s *TestSuite) TestInsertUserSuccess() {
-	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$3) RETURNING id"))
+	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$4) RETURNING id"))
 	prepare.ExpectQuery().
 		WillReturnRows(
 			sqlmock.NewRows([]string{"id"}).AddRow(
@@ -92,7 +109,7 @@ func (s *TestSuite) TestInsertUserSuccess() {
 }
 
 func (s *TestSuite) TestInsertUserFailedToPrepareQuery() {
-	s.mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$3) RETURNING id")).
+	s.mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$4) RETURNING id")).
 		WillReturnError(fmt.Errorf("faield to prepare query"))
 	output, err := s.r.InsertUser(s.ctx, s.user)
 	require.Error(s.T(), err)
@@ -100,7 +117,7 @@ func (s *TestSuite) TestInsertUserFailedToPrepareQuery() {
 }
 
 func (s *TestSuite) TestInsertUserFailed() {
-	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$3) RETURNING id"))
+	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO users(phone_number, full_name, password, password_salt) VALUES($1,$2,$3,$4) RETURNING id"))
 	prepare.ExpectQuery().
 		WillReturnError(fmt.Errorf("failed to insert user")).
 		WithArgs(
@@ -132,7 +149,7 @@ func (s *TestSuite) TestGetUserByPhoneNumberSuccess() {
 	require.Nil(s.T(), deep.Equal(output, s.user))
 }
 
-func (s *TestSuite) TestGEtUserByPhoneNumberFailedPrepareQuery() {
+func (s *TestSuite) TestGetUserByPhoneNumberFailedPrepareQuery() {
 	s.mock.ExpectPrepare(regexp.QuoteMeta("SELECT id, phone_number, full_name, password, password_salt FROM users WHERE phone_number = $1	")).
 		WillReturnError(fmt.Errorf("internal server error"))
 	output, err := s.r.GetUserByPhoneNumber(s.ctx, s.getUserByPhoneNumberInput)
@@ -144,18 +161,6 @@ func (s *TestSuite) TestGetUserByPhoneNumberFailed() {
 	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("SELECT id, phone_number, full_name, password, password_salt FROM users WHERE phone_number = $1	"))
 	prepare.ExpectQuery().
 		WillReturnError(fmt.Errorf("internal server error")).
-		WithArgs(
-			s.user.PhoneNumber,
-		)
-	output, err := s.r.GetUserByPhoneNumber(s.ctx, s.getUserByPhoneNumberInput)
-	require.Error(s.T(), err)
-	require.Nil(s.T(), deep.Equal(output, User{}))
-}
-
-func (s *TestSuite) TestGetUserByPhoneNumberNotFound() {
-	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("SELECT id, phone_number, full_name, password, password_salt FROM users WHERE phone_number = $1	"))
-	prepare.ExpectQuery().
-		WillReturnError(fmt.Errorf("sql: no rows in result set")).
 		WithArgs(
 			s.user.PhoneNumber,
 		)
@@ -243,14 +248,14 @@ func (s *TestSuite) TestUpdateUserByIDSuccess() {
 			s.user.ID,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-	err := s.r.UpdateUserByID(s.ctx, s.user)
+	err := s.r.UpdateUser(s.ctx, s.updateUserInput)
 	require.NoError(s.T(), err)
 }
 
 func (s *TestSuite) TestUpdateUserByIDFailedPrepareQuery() {
 	s.mock.ExpectPrepare(regexp.QuoteMeta("UPDATE users SET phone_number = $1, full_name = $2 WHERE id = $3")).
 		WillReturnError(fmt.Errorf("sql: internal server error"))
-	err := s.r.UpdateUserByID(s.ctx, s.user)
+	err := s.r.UpdateUser(s.ctx, s.updateUserInput)
 	require.Error(s.T(), err)
 }
 
@@ -263,6 +268,36 @@ func (s *TestSuite) TestUpdateUserByIDFailed() {
 			s.user.FullName,
 			s.user.ID,
 		)
-	err := s.r.UpdateUserByID(s.ctx, s.user)
+	err := s.r.UpdateUser(s.ctx, s.updateUserInput)
+	require.Error(s.T(), err)
+}
+
+func (s *TestSuite) TestUpdateLastLoginAndSuccessfullyLoginSuccess() {
+	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("UPDATE users SET successfully_login = (successfully_login + 1), last_login = $1 WHERE id = $2"))
+	prepare.ExpectExec().
+		WithArgs(
+			s.curr,
+			s.user.ID,
+		).WillReturnResult(sqlmock.NewResult(1, 1))
+	err := s.r.UpdateLastLoginAndSuccessfullyLogin(s.ctx, s.updateLastLoginAndSuccessfullyLoginInput)
+	require.NoError(s.T(), err)
+}
+
+func (s *TestSuite) TestUpdateLastLoginAndSuccessfullyLoginFailedPrepareQuery() {
+	s.mock.ExpectPrepare(regexp.QuoteMeta("UPDATE users SET successfully_login = (successfully_login + 1), last_login = $1 WHERE id = $2")).
+		WillReturnError(fmt.Errorf("sql: internal server error"))
+	err := s.r.UpdateLastLoginAndSuccessfullyLogin(s.ctx, s.updateLastLoginAndSuccessfullyLoginInput)
+	require.Error(s.T(), err)
+}
+
+func (s *TestSuite) TestUpdateLastLoginAndSuccessfullyLoginByIDFailed() {
+	prepare := s.mock.ExpectPrepare(regexp.QuoteMeta("UPDATE users SET successfully_login = (successfully_login + 1), last_login = $1 WHERE id = $2"))
+	prepare.ExpectExec().
+		WithArgs(
+			s.curr,
+			s.user.ID,
+		).
+		WillReturnError(fmt.Errorf("sql: internal server error"))
+	err := s.r.UpdateLastLoginAndSuccessfullyLogin(s.ctx, s.updateLastLoginAndSuccessfullyLoginInput)
 	require.Error(s.T(), err)
 }

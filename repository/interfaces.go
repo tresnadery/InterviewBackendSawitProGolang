@@ -11,5 +11,6 @@ type RepositoryInterface interface {
 	GetUserByPhoneNumber(ctx context.Context, input GetUserByPhoneNumberInput) (output User, err error)
 	GetUserByID(ctx context.Context, input GetUserByIDInput) (output UserInfo, err error)
 	GetUserByFullName(ctx context.Context, input GetUserByFullNameInput) (output UserInfo, err error)
-	UpdateUserByID(ctx context.Context, input User) (err error)
+	UpdateUser(ctx context.Context, input UpdateUserInput) (err error)
+	UpdateLastLoginAndSuccessfullyLogin(ctx context.Context, input UpdateLastLoginAndSuccessfullyLoginInput) (err error)
 }
