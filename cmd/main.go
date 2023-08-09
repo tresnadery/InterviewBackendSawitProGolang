@@ -8,7 +8,6 @@ import (
 	"InterviewBackendSawitProGolang/pkg/middleware"
 	"InterviewBackendSawitProGolang/repository"
 
-	"fmt"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"log"
@@ -31,8 +30,6 @@ func main() {
 
 func newServer() *handler.Server {
 	dbDsn := os.Getenv("DATABASE_URL")
-	fmt.Println("==========")
-	fmt.Println(dbDsn)
 	var repo repository.RepositoryInterface = repository.NewRepository(repository.NewRepositoryOptions{
 		Dsn: dbDsn,
 	})
