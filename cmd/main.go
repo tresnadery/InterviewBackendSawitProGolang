@@ -5,14 +5,24 @@ import (
 
 	"InterviewBackendSawitProGolang/generated"
 	"InterviewBackendSawitProGolang/handler"
+	"InterviewBackendSawitProGolang/pkg/middleware"
 	"InterviewBackendSawitProGolang/repository"
 
+	"fmt"
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"log"
+	// "net/http"
 )
 
 func main() {
 	e := echo.New()
-
+	mw, err := middleware.NewMiddleware()
+	if err != nil {
+		log.Fatalln("error creating middleware:", err)
+	}
+	e.Use(echoMiddleware.Logger())
+	e.Use(mw)
 	var server generated.ServerInterface = newServer()
 
 	generated.RegisterHandlers(e, server)
@@ -21,6 +31,8 @@ func main() {
 
 func newServer() *handler.Server {
 	dbDsn := os.Getenv("DATABASE_URL")
+	fmt.Println("==========")
+	fmt.Println(dbDsn)
 	var repo repository.RepositoryInterface = repository.NewRepository(repository.NewRepositoryOptions{
 		Dsn: dbDsn,
 	})
