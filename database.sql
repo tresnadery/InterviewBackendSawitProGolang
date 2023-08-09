@@ -6,17 +6,19 @@
   3. How you name the fields.
   In this assignment we will use PostgreSQL as the database.
   */
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-/** This is test table. Remove this table and replace with your own tables. */
 CREATE TABLE users (
-	id serial PRIMARY KEY,
-	name VARCHAR ( 50 ) UNIQUE NOT NULL,
+	id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+	phone_number VARCHAR (13) UNIQUE NOT NULL,
+	full_name VARCHAR ( 60 ) NOT NULL,
 	password text,
 	password_salt VARCHAR (15),
-	login_attempts int,
-	created_at timestamps,
-	created_by int,
-	modified_at timestamps,
-	modified_by int,
-	deleted_at timestamps
+	successfully_login int DEFAULT 0,
+	last_login timestamptz,
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+	created_by uuid,
+	modified_at timestamptz,
+	modified_by uuid,
+	deleted_at timestamptz
 );
